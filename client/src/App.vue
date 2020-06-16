@@ -3,8 +3,12 @@
     <Modal v-if="showModal" @close="showModal = false" />
     <Menu />
     <div class="content">
-      <div class="w-75"> <Document :content="content" :userId="userId" :editor="editor" /> </div>
-      <div class="w-25"> <VoiceChat :users="users" /> </div>
+      <div class="w-75">
+        <Document :content="content" :userId="userId" :permission="permission" />
+      </div>
+      <div class="w-25">
+        <VoiceChat :users="users" :permission="permission" :userId="userId" />
+      </div>
     </div>
   </div>
 </template>
@@ -30,10 +34,8 @@ export default {
       users: [],
       code: '',
       editor: '',
-      content: {
-        id: '',
-        text: '',
-      },
+      permission: true,
+      content: '',
     };
   },
   methods: {
@@ -43,18 +45,17 @@ export default {
         const message = JSON.parse(payload.data);
 
         if (message.event === 'connect') {
-          vm.userId = message.data;
-          if (vm.editor !== '') vm.editor = message.data;
+          vm.userId = message.data.id;
+          vm.editor = message.data.editor;
+          vm.content = message.data.content;
         } else if (message.event === 'newUser') {
           vm.users = message.data;
         } else if (message.event === 'codeChange') {
-          vm.content = {
-            id: message.data.id,
-            text: message.data.text,
-          };
+          vm.content = message.data;
         } else if (message.event === 'newEditor') {
           vm.editor = message.data;
         }
+        vm.permission = (vm.editor === vm.userId || vm.editor === '');
       };
     },
   },
