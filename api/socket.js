@@ -9,17 +9,14 @@ const events = {
   NEW_EDITOR: "newEditor"
 };
 let users = [];
-let editorContent = {
-  id: '',
-  text: 'const a = 10;\nconst b = 5;\n\nfunction sum () {\n\treturn a + b;\n'
-};
+let editorId = '';
+let editorContent = "const a = 10;\nconst b = 5;\n\nfunction sum () {\n\treturn a + b;\n";
 
 function broadcastContent(clientId) {
   server.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       if (clientId && clientId !== client.id)
       client.send(`{"event": "${events.CONTENT_UPDATE}", "data": ${JSON.stringify(editorContent)}}`);
-      console.log(`{"event": "${events.CONTENT_UPDATE}", "data": ${JSON.stringify(editorContent)}}`);
     }
   });
 }
@@ -27,8 +24,8 @@ function broadcastContent(clientId) {
 function broadcastNewEditor(clientId) {
   server.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      if (clientId !== client.id)
-      client.send(`{"event": "${events.NEW_EDITOR}", "data": "${clientId}"}`);
+      editorId = clientId;
+      client.send(`{"event": "${events.NEW_EDITOR}", "data": "${editorId}"}`);
     }
   });
 }
@@ -43,13 +40,11 @@ function broadcastUsersList() {
 
 server.on("connection", ws => {
   ws.id = crypto.randomBytes(16).toString("hex");
-  ws.send(`{"event": "${events.CONNECT}", "data": "${ws.id}"}`);
+  ws.send(`{"event": "${events.CONNECT}", "data": {"id": "${ws.id}", "editor": "${editorId}", "content": ${JSON.stringify(editorContent)}}}`);
 
   if (users.length != 0) broadcastUsersList();
 
-  if (editorContent) broadcastContent();
-
-  if (editorContent.id === '') editorContent.id = ws.id;
+  if (editorId === '') editorId = ws.id;
 
   ws.on("message", payload => {
     const message = JSON.parse(payload);
@@ -59,7 +54,7 @@ server.on("connection", ws => {
     }
 
     else if (message.event === events.CONTENT_UPDATE) {
-      editorContent = {user: ws.id, text: message.data};
+      editorContent = message.data;
       broadcastContent(ws.id);
     }
 
