@@ -9,7 +9,15 @@
         </li>
       </ul>
     </div>
-    <div class="voice-chat-area">
+
+    <div class="buttons">
+      <button
+        :class="`button ${permission ? 'disabled' : 'edit'}`"
+        @click="requestEditingAccess"
+        :disabled="permission"
+        >
+        Permissão para editar código
+      </button>
       <button v-if="!onVoiceChat" @click="onVoiceChat = !onVoiceChat" class="button green"
       >Entrar na chamada de voz
       </button>
@@ -32,6 +40,20 @@ export default {
     users: {
       type: Array,
       required: true,
+    },
+    permission: {
+      type: Boolean,
+      required: true,
+    },
+    userId: {
+      type: String,
+      required: true,
+    },
+  },
+  methods: {
+    requestEditingAccess() {
+      const message = { event: 'newEditor', data: this.userId };
+      this.$socket.send(JSON.stringify(message));
     },
   },
 };
@@ -90,4 +112,8 @@ export default {
 .green { background-color: #7ab71d; }
 
 .red { background-color: #a50c0c; }
+
+.disabled { background-color: #667275; }
+
+.edit { background-color: #d8a008; }
 </style>
